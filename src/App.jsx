@@ -353,7 +353,7 @@ async function deleteTransactionFromDb(id) {
 
 function Section({ title, isOpen, onToggle, children, bg }) {
   return (
-    <div style={{ ...sectionStyle(), background: bg || "white" }}>
+    <div style={{ ...sectionStyle(), background: bg || "white", flexShrink: 0 }}>
       <div onClick={onToggle} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", marginBottom: isOpen ? 16 : 0 }}>
         <h3 style={{ margin: 0, fontSize: 18 }}>{title}</h3>
         <button style={buttonStyle(false)}>{isOpen ? "Inchide" : "Deschide"}</button>
@@ -550,8 +550,8 @@ export default function App() {
   const warnings = selectedDeal ? getDealWarnings(selectedDeal) : [];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827" }}>
-      <div style={{ maxWidth: 1400, margin: "0 auto", display: "grid", gap: 16 }}>
+    <div style={{ minHeight: "100vh", height: "100vh", background: "#f8fafc", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827", overflow: "hidden", boxSizing: "border-box" }}>
+      <div style={{ maxWidth: 1400, height: "100%", margin: "0 auto", display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr)", gap: 16, minHeight: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 30 }}>Manager local programari notar</h1>
@@ -571,8 +571,8 @@ export default function App() {
           <div style={sectionStyle()}><div style={{ color: "#6b7280", fontSize: 13 }}>Ultima salvare</div><div style={{ fontSize: 16, fontWeight: 700 }}>{savedAt || "-"}</div></div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 16, alignItems: "start" }}>
-          <div style={{ ...sectionStyle(), position: "sticky", top: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "380px minmax(0, 1fr)", gap: 16, alignItems: "stretch", minHeight: 0, overflow: "hidden" }}>
+          <div style={{ ...sectionStyle(), display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
             <h3 style={{ marginTop: 0 }}>Tranzactii</h3>
             <div style={{ display: "grid", gap: 10 }}>
               <input style={inputStyle()} placeholder="Cauta..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -594,7 +594,7 @@ export default function App() {
               </select>
             </div>
 
-            <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+            <div style={{ display: "grid", gap: 10, marginTop: 14, flex: 1, minHeight: 0, overflowY: "auto", paddingRight: 4 }}>
               {filteredDeals.map((deal) => {
                 const dealWarnings = getDealWarnings(deal);
                 const commissionWarnings = getCommissionWarnings(deal);
@@ -633,7 +633,7 @@ export default function App() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gap: 16 }}>
+          <div style={{ display: "grid", gap: 16, minHeight: 0, overflowY: "auto", paddingRight: 6, alignContent: "start" }}>
             {selectedDeal ? (
               <>
                 <Section title="Detalii tranzactie" isOpen={sectionsOpen.detalii} onToggle={() => toggleSection("detalii")}>
