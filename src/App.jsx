@@ -20,7 +20,7 @@ const TYPE_OPTIONS = ["avans", "final"];
 const CURRENCY_OPTIONS = ["EUR", "RON"];
 const COMMISSION_TYPE_OPTIONS = ["Procent", "Pret/mp", "Suma fixa"];
 const COMMISSION_PAYMENT_STATUS_OPTIONS = ["Achitat", "Achitat partial", "Neachitat"];
-const COMMISSION_FILTER_OPTIONS = ["toate", "probleme comision", "neachitat", "achitat partial"];
+const COMMISSION_FILTER_OPTIONS = ["toate", "probleme comision", "neachitat", "achitat partial", "achitat"];
 
 const STATUS_COLORS = {
   programat: { background: "#dbeafe", color: "#1d4ed8", border: "1px solid #93c5fd" },
@@ -385,6 +385,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [statusFilter, setStatusFilter] = useState("toate");
   const [commissionFilter, setCommissionFilter] = useState("toate");
+  const [hidePaidCommissions, setHidePaidCommissions] = useState(false);
   const [sortOrder, setSortOrder] = useState("manual");
   const [sectionsOpen, setSectionsOpen] = useState({
     detalii: true,
@@ -439,10 +440,15 @@ export default function App() {
       const hasPartial = d.sellerCommissionPaymentStatus === "Achitat partial" || d.buyerCommissionPaymentStatus === "Achitat partial";
       const hasCommissionIssues = hasUnpaid || hasPartial;
 
+      const fullyPaid = d.sellerCommissionPaymentStatus === "Achitat" && d.buyerCommissionPaymentStatus === "Achitat";
+
       let matchesCommission = true;
       if (commissionFilter === "probleme comision") matchesCommission = hasCommissionIssues;
       if (commissionFilter === "neachitat") matchesCommission = hasUnpaid;
       if (commissionFilter === "achitat partial") matchesCommission = hasPartial;
+      if (commissionFilter === "achitat") matchesCommission = fullyPaid;
+
+      if (hidePaidCommissions && fullyPaid) return false;
 
       return matchesSearch && matchesStatus && matchesCommission;
     });
@@ -480,7 +486,7 @@ export default function App() {
     }
 
     return sorted;
-  }, [tranzactii, search, statusFilter, commissionFilter, sortOrder]);
+  }, [tranzactii, search, statusFilter, commissionFilter, hidePaidCommissions, sortOrder]);
 
   function updateDeal(id, patch) {
     setTranzactii((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
@@ -597,10 +603,15 @@ export default function App() {
               </select>
               <select style={inputStyle()} value={commissionFilter} onChange={(e) => setCommissionFilter(e.target.value)}>
                 <option value="toate">Toate comisioanele</option>
-                <option value="probleme comision">Doar probleme comision</option>
-                <option value="neachitat">Doar neachitat</option>
-                <option value="achitat partial">Doar achitat partial</option>
+                <option value="probleme comision">Comision neachitat + achitat partial</option>
+                <option value="neachitat">Comision neachitat</option>
+                <option value="achitat partial">Comision achitat partial</option>
+                <option value="achitat">Comision achitat</option>
               </select>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#374151", marginTop: 2 }}>
+                <input type="checkbox" checked={hidePaidCommissions} onChange={(e) => setHidePaidCommissions(e.target.checked)} />
+                <span>Ascunde tranzactiile cu comision achitat</span>
+              </label>
               <select style={inputStyle()} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
                 <option value="manual">Ordinea din lista</option>
                 <option value="cronologic_asc">Cronologic - cel mai apropiat</option>
@@ -609,7 +620,7 @@ export default function App() {
               </select>
             </div>
 
-            <div style={{ display: "grid", gap: 8, marginTop: 12, maxHeight: "62vh", overflowY: "auto", paddingRight: 4 }}>
+            <div style={{ display: "grid", gap: 8, marginTop: 12, maxHeight: "74vh", overflowY: "auto", paddingRight: 4 }}>
               {filteredDeals.map((deal) => {
                 const dealWarnings = getDealWarnings(deal);
                 const commissionWarnings = getCommissionWarnings(deal);
