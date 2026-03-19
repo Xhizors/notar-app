@@ -157,7 +157,7 @@ function seedDeal() {
     price: 120000,
     priceCurrency: "EUR",
     advanceAmount: 10000,
-    advanceCurrency: "EUR",
+    advanceCurrency: "RON",
     sellerCommissionType: "Pret/mp",
     sellerCommissionValue: 1,
     buyerCommissionType: "Procent",
@@ -202,6 +202,32 @@ function completionStats(parties) {
   return { checked, total, pct: total ? Math.round((checked / total) * 100) : 0 };
 }
 
+function getDatePart(value) {
+  if (!value) return "";
+  const [datePart] = String(value).split("T");
+  return datePart || "";
+}
+
+function getTimePart(value) {
+  if (!value) return "";
+  const [, timePart] = String(value).split("T");
+  return (timePart || "").slice(0, 5);
+}
+
+function combineDateTime(datePart, timePart) {
+  if (!datePart) return "";
+  return `${datePart}T${timePart || "00:00"}`;
+}
+
+function formatDateTime(value) {
+  if (!value) return "-";
+  const datePart = getDatePart(value);
+  if (!datePart) return "-";
+  const [year, month, day] = datePart.split("-");
+  const time = getTimePart(value);
+  return time ? `${day}/${month}/${year} ${time}` : `${day}/${month}/${year}`;
+}
+
 function getCommissionWarnings(deal) {
   const warnings = [];
   if (deal.sellerCommissionPaymentStatus === "Neachitat") warnings.push("Vanzator - COMISION NEACHITAT");
@@ -213,8 +239,8 @@ function getCommissionWarnings(deal) {
 
 function getDealWarnings(deal) {
   const warnings = [];
-  if (!deal.advanceDateTime && deal.type === "avans") warnings.push("Nu este setata data si ora pentru avans.");
-  if (!deal.finalDateTime && deal.type === "final") warnings.push("Nu este setata data si ora pentru contractul final.");
+  if (!deal.finalDateTime) warnings.push("Nu este setata data si ora pentru contractul final.");
+  if (deal.type === "avans" && !deal.advanceDateTime) warnings.push("Nu este setata data si ora pentru avans.");
   if (!deal.price) warnings.push("Lipseste pretul tranzactiei.");
   if (!deal.area && (deal.sellerCommissionType === "Pret/mp" || deal.buyerCommissionType === "Pret/mp")) {
     warnings.push("Lipseste suprafata, dar unul dintre comisioane este calculat la mp.");
@@ -255,22 +281,6 @@ function getDealWarnings(deal) {
 function formatMoney(value, currency) {
   const number = parseNumber(value);
   return `${number.toLocaleString("ro-RO", { maximumFractionDigits: 2 })} ${currency}`.trim();
-}
-
-function formatDateTime(value) {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 function dealCompletion(deal) {
@@ -357,7 +367,7 @@ function Section({ title, isOpen, onToggle, children, bg }) {
     <div style={{ ...sectionStyle(), background: bg || "white", flexShrink: 0 }}>
       <div onClick={onToggle} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", marginBottom: isOpen ? 12 : 0 }}>
         <h3 style={{ margin: 0, fontSize: 17 }}>{title}</h3>
-        <button style={{ ...buttonStyle(false), padding: "6px 10px", fontSize: 12 }}>{isOpen ? "Inchide" : "Deschide"}</button>
+        <button type="button" style={{ ...buttonStyle(false), padding: "6px 10px", fontSize: 12 }}>{isOpen ? "Inchide" : "Deschide"}</button>
       </div>
       {isOpen ? children : null}
     </div>
@@ -420,7 +430,7 @@ export default function App() {
   const filteredDeals = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = tranzactii.filter((d) => {
-      const matchesSearch = !q || [d.title, d.status, d.type, ...d.sellers.map((s) => s.name), ...d.buyers.map((b) => b.name), d.notes].join(" ").toLowerCase().includes(q);
+      const matchesSearch = !q || [d.title, d.status, d.type, d.agent, ...d.sellers.map((s) => s.name), ...d.buyers.map((b) => b.name), d.notes].join(" ").toLowerCase().includes(q);
       const matchesStatus = statusFilter === "toate" || d.status === statusFilter;
       const matchesAgent = agentFilter === "toate" || d.agent === agentFilter;
 
@@ -565,9 +575,9 @@ export default function App() {
             <p style={{ marginTop: 8, color: "#6b7280" }}>Imobiliare Jucu</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button style={buttonStyle(false)} onClick={duplicateDeal}>Duplica tranzactie</button>
-            <button style={buttonStyle(false)} onClick={clearAllData}>Reset demo</button>
-            <button style={buttonStyle(true)} onClick={addDeal}>Tranzactie noua</button>
+            <button type="button" style={buttonStyle(false)} onClick={duplicateDeal}>Duplica tranzactie</button>
+            <button type="button" style={buttonStyle(false)} onClick={clearAllData}>Reset demo</button>
+            <button type="button" style={buttonStyle(true)} onClick={addDeal}>Tranzactie noua</button>
           </div>
         </div>
 
@@ -633,7 +643,7 @@ export default function App() {
                       <div><b>Cumparatori:</b> {buyerNames || "-"}</div>
                       <div><b>Pret:</b> {deal.price ? `${formatNumber(deal.price)} EUR` : "-"} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
                       <div><b>Com. V:</b> {formatMoney(sellerCommissionValue, "EUR")} · <b>Com. C:</b> {formatMoney(buyerCommissionValue, "EUR")}</div>
-                      <div><b>Avans:</b> {formatDateTime(deal.advanceDateTime)}</div>
+                      {deal.type === "avans" ? <div><b>Avans:</b> {formatDateTime(deal.advanceDateTime)}</div> : null}
                       <div><b>Final:</b> {formatDateTime(deal.finalDateTime)}</div>
                       {deal.type === "avans" && parseNumber(deal.advanceAmount) > 0 ? (
                         <div>
@@ -666,64 +676,62 @@ export default function App() {
                       <label style={labelStyle()}>Nume tranzactie</label>
                       <input style={inputStyle()} value={selectedDeal.title || ""} onChange={(e) => updateDeal(selectedDeal.id, { title: e.target.value })} placeholder="Ex: Jucu - teren 1500 mp" />
                     </div>
-
                     <div>
                       <label style={labelStyle()}>Status</label>
                       <select style={inputStyle()} value={selectedDeal.status} onChange={(e) => updateDeal(selectedDeal.id, { status: e.target.value })}>
                         {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-
                     <div>
                       <label style={labelStyle()}>Agent</label>
                       <select style={inputStyle()} value={selectedDeal.agent || "Paul Pojar"} onChange={(e) => updateDeal(selectedDeal.id, { agent: e.target.value })}>
                         {AGENT_OPTIONS.map((agent) => <option key={agent} value={agent}>{agent}</option>)}
                       </select>
                     </div>
-
                     <div>
                       <label style={labelStyle()}>Tip</label>
                       <select style={inputStyle()} value={selectedDeal.type} onChange={(e) => updateDeal(selectedDeal.id, { type: e.target.value })}>
                         {TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-
                     <div>
                       <label style={labelStyle()}>Suprafata</label>
                       <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.area} onChange={(e) => updateDeal(selectedDeal.id, { area: e.target.value })} placeholder="mp" />
                     </div>
-
                     <div>
                       <label style={labelStyle()}>Pret (EUR)</label>
                       <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000" />
                       {selectedDeal.price ? <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{formatNumber(selectedDeal.price)} EUR</div> : null}
                     </div>
-
                     <div>
                       <label style={labelStyle()}>Moneda plata pret</label>
                       <select style={inputStyle()} value={selectedDeal.priceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { priceCurrency: e.target.value })}>
                         {CURRENCY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-
                     <div>
-                      <label style={labelStyle()}>Data si ora final</label>
-                      <input style={inputStyle()} type="datetime-local" value={selectedDeal.finalDateTime} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: e.target.value })} />
+                      <label style={labelStyle()}>Data final</label>
+                      <input style={inputStyle()} type="date" value={getDatePart(selectedDeal.finalDateTime)} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: combineDateTime(e.target.value, getTimePart(selectedDeal.finalDateTime)) })} />
                     </div>
-
-                    {selectedDeal.type === "avans" && (
+                    <div>
+                      <label style={labelStyle()}>Ora final</label>
+                      <input style={inputStyle()} type="time" value={getTimePart(selectedDeal.finalDateTime)} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: combineDateTime(getDatePart(selectedDeal.finalDateTime), e.target.value) })} />
+                    </div>
+                    {selectedDeal.type === "avans" ? (
                       <>
                         <div>
-                          <label style={labelStyle()}>Data si ora avans</label>
-                          <input style={inputStyle()} type="datetime-local" value={selectedDeal.advanceDateTime} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: e.target.value })} />
+                          <label style={labelStyle()}>Data avans</label>
+                          <input style={inputStyle()} type="date" value={getDatePart(selectedDeal.advanceDateTime)} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: combineDateTime(e.target.value, getTimePart(selectedDeal.advanceDateTime)) })} />
                         </div>
-
+                        <div>
+                          <label style={labelStyle()}>Ora avans</label>
+                          <input style={inputStyle()} type="time" value={getTimePart(selectedDeal.advanceDateTime)} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: combineDateTime(getDatePart(selectedDeal.advanceDateTime), e.target.value) })} />
+                        </div>
                         <div>
                           <label style={labelStyle()}>Avans (EUR)</label>
                           <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.advanceAmount} onChange={(e) => updateDeal(selectedDeal.id, { advanceAmount: e.target.value })} placeholder="Suma avans in EUR" />
                           {selectedDeal.advanceAmount ? <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{formatNumber(selectedDeal.advanceAmount)} EUR</div> : null}
                         </div>
-
                         <div>
                           <label style={labelStyle()}>Moneda plata avans</label>
                           <select style={inputStyle()} value={selectedDeal.advanceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { advanceCurrency: e.target.value })}>
@@ -731,8 +739,7 @@ export default function App() {
                           </select>
                         </div>
                       </>
-                    )}
-
+                    ) : null}
                     <div style={{ gridColumn: "1 / -1" }}>
                       <label style={labelStyle()}>Observatii generale tranzactie</label>
                       <textarea style={{ ...inputStyle(), minHeight: 90 }} value={selectedDeal.notes} onChange={(e) => updateDeal(selectedDeal.id, { notes: e.target.value })} />
@@ -810,7 +817,7 @@ export default function App() {
                 <Section title="Vanzatori" isOpen={sectionsOpen.vanzatori} onToggle={() => toggleSection("vanzatori")}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <div style={{ color: "#6b7280" }}>Vanzatori: {selectedDeal.sellers.length}</div>
-                    <button style={buttonStyle(false)} onClick={() => addParty("sellers")}>Adauga vanzator</button>
+                    <button type="button" style={buttonStyle(false)} onClick={() => addParty("sellers")}>Adauga vanzator</button>
                   </div>
                   <div style={{ display: "grid", gap: 12 }}>
                     {selectedDeal.sellers.map((party, idx) => {
@@ -829,7 +836,7 @@ export default function App() {
                                 <textarea style={{ ...inputStyle(), minHeight: 80 }} value={party.notes || ""} onChange={(e) => updateParty("sellers", party.id, { notes: e.target.value })} />
                               </div>
                             </div>
-                            <button style={buttonStyle(false)} onClick={() => removeParty("sellers", party.id)}>Sterge</button>
+                            <button type="button" style={buttonStyle(false)} onClick={() => removeParty("sellers", party.id)}>Sterge</button>
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: 13 }}>
                             <span>Documente primite: {checkedCount}/{DOC_OPTIONS.length}</span>
@@ -852,7 +859,7 @@ export default function App() {
                 <Section title="Cumparatori" isOpen={sectionsOpen.cumparatori} onToggle={() => toggleSection("cumparatori")}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <div style={{ color: "#6b7280" }}>Cumparatori: {selectedDeal.buyers.length}</div>
-                    <button style={buttonStyle(false)} onClick={() => addParty("buyers")}>Adauga cumparator</button>
+                    <button type="button" style={buttonStyle(false)} onClick={() => addParty("buyers")}>Adauga cumparator</button>
                   </div>
                   <div style={{ display: "grid", gap: 12 }}>
                     {selectedDeal.buyers.map((party, idx) => {
@@ -871,7 +878,7 @@ export default function App() {
                                 <textarea style={{ ...inputStyle(), minHeight: 80 }} value={party.notes || ""} onChange={(e) => updateParty("buyers", party.id, { notes: e.target.value })} />
                               </div>
                             </div>
-                            <button style={buttonStyle(false)} onClick={() => removeParty("buyers", party.id)}>Sterge</button>
+                            <button type="button" style={buttonStyle(false)} onClick={() => removeParty("buyers", party.id)}>Sterge</button>
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: 13 }}>
                             <span>Documente primite: {checkedCount}/{DOC_OPTIONS.length}</span>
@@ -892,7 +899,7 @@ export default function App() {
                 </Section>
 
                 <div>
-                  <button style={{ ...buttonStyle(false), color: "#b91c1c", borderColor: "#fca5a5" }} onClick={() => deleteDeal(selectedDeal.id)}>Sterge tranzactia</button>
+                  <button type="button" style={{ ...buttonStyle(false), color: "#b91c1c", borderColor: "#fca5a5" }} onClick={() => deleteDeal(selectedDeal.id)}>Sterge tranzactia</button>
                 </div>
               </>
             ) : (
