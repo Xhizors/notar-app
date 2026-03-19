@@ -271,6 +271,11 @@ function getDealWarnings(deal) {
   return warnings;
 }
 
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "";
+  return Number(value).toLocaleString("ro-RO");
+}
+
 function formatMoney(value, currency) {
   const number = parseNumber(value);
   return `${number.toLocaleString("ro-RO", { maximumFractionDigits: 2 })} ${currency}`.trim();
@@ -657,12 +662,15 @@ export default function App() {
                       <div><b>Agent:</b> {deal.agent || "-"}</div>
                       <div><b>Vanzatori:</b> {sellerNames || "-"}</div>
                       <div><b>Cumparatori:</b> {buyerNames || "-"}</div>
-                      <div><b>Pret EUR:</b> {formatMoney(deal.price, "EUR")} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
+                      <div><b>Pret:</b> {deal.price ? `${formatNumber(deal.price)} EUR` : "-"} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
                       <div><b>Com. V:</b> {formatMoney(sellerCommissionValue, "EUR")} · <b>Com. C:</b> {formatMoney(buyerCommissionValue, "EUR")}</div>
                       <div><b>Avans:</b> {formatDateTime(deal.advanceDateTime)}</div>
                       <div><b>Final:</b> {formatDateTime(deal.finalDateTime)}</div>
                       {deal.type === "avans" && parseNumber(deal.advanceAmount) > 0 ? (
-                        <div><b>Avans:</b> {formatMoney(deal.advanceAmount, deal.advanceCurrency || "EUR")}</div>
+                        <div>
+                          <b>Avans:</b> {formatMoney(deal.advanceAmount, "EUR")}
+                          {deal.advanceCurrency && deal.advanceCurrency !== "EUR" ? ` (${deal.advanceCurrency})` : ""}
+                        </div>
                       ) : null}
                     </div>
                     <div style={{ marginTop: 8, display: "grid", gap: 4, fontSize: 12 }}>
@@ -722,8 +730,13 @@ export default function App() {
                       <input style={inputStyle()} type="datetime-local" value={selectedDeal.finalDateTime} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: e.target.value })} />
                     </div>
                     <div>
-                      <label style={labelStyle()}>Pret</label>
-                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000 (EUR)" />
+                      <label style={labelStyle()}>Pret (EUR)</label>
+                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000" />
+                      {selectedDeal.price && (
+                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+                          {formatNumber(selectedDeal.price)} EUR
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label style={labelStyle()}>Moneda plata pret</label>
@@ -736,7 +749,7 @@ export default function App() {
                       <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.advanceAmount} onChange={(e) => updateDeal(selectedDeal.id, { advanceAmount: e.target.value })} placeholder="Suma avans" />
                     </div>
                     <div>
-                      <label style={labelStyle()}>Moneda avans</label>
+                      <label style={labelStyle()}>Moneda plata avans</label>
                       <select style={inputStyle()} value={selectedDeal.advanceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { advanceCurrency: e.target.value })}>
                         {CURRENCY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
