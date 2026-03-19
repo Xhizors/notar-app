@@ -663,47 +663,73 @@ export default function App() {
                       <label style={labelStyle()}>Nume tranzactie</label>
                       <input style={inputStyle()} value={selectedDeal.title || ""} onChange={(e) => updateDeal(selectedDeal.id, { title: e.target.value })} placeholder="Ex: Jucu - teren 1500 mp" />
                     </div>
+
                     <div>
                       <label style={labelStyle()}>Status</label>
                       <select style={inputStyle()} value={selectedDeal.status} onChange={(e) => updateDeal(selectedDeal.id, { status: e.target.value })}>
                         {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
+
                     <div>
                       <label style={labelStyle()}>Agent</label>
                       <select style={inputStyle()} value={selectedDeal.agent || "Paul Pojar"} onChange={(e) => updateDeal(selectedDeal.id, { agent: e.target.value })}>
                         {AGENT_OPTIONS.map((agent) => <option key={agent} value={agent}>{agent}</option>)}
                       </select>
                     </div>
+
                     <div>
                       <label style={labelStyle()}>Tip</label>
                       <select style={inputStyle()} value={selectedDeal.type} onChange={(e) => updateDeal(selectedDeal.id, { type: e.target.value })}>
                         {TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
+
                     <div>
                       <label style={labelStyle()}>Suprafata</label>
                       <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.area} onChange={(e) => updateDeal(selectedDeal.id, { area: e.target.value })} placeholder="mp" />
                     </div>
-                    {selectedDeal.type === "avans" && (
-                    <>
+
                     <div>
-                      <label style={labelStyle()}>Data si ora avans</label>
-                      <input style={inputStyle()} type="datetime-local" value={selectedDeal.advanceDateTime} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: e.target.value })} />
+                      <label style={labelStyle()}>Pret (EUR)</label>
+                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000" />
+                      {selectedDeal.price ? <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{formatNumber(selectedDeal.price)} EUR</div> : null}
                     </div>
+
                     <div>
-                      <label style={labelStyle()}>Avans (EUR)</label>
-                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.advanceAmount} onChange={(e) => updateDeal(selectedDeal.id, { advanceAmount: e.target.value })} placeholder="Suma avans in EUR" />
-                      {selectedDeal.advanceAmount ? <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{formatNumber(selectedDeal.advanceAmount)} EUR</div> : null}
-                    </div>
-                    <div>
-                      <label style={labelStyle()}>Moneda plata avans</label>
-                      <select style={inputStyle()} value={selectedDeal.advanceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { advanceCurrency: e.target.value })}>
+                      <label style={labelStyle()}>Moneda plata pret</label>
+                      <select style={inputStyle()} value={selectedDeal.priceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { priceCurrency: e.target.value })}>
                         {CURRENCY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-                    </>
+
+                    <div>
+                      <label style={labelStyle()}>Data si ora final</label>
+                      <input style={inputStyle()} type="datetime-local" value={selectedDeal.finalDateTime} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: e.target.value })} />
+                    </div>
+
+                    {selectedDeal.type === "avans" && (
+                      <>
+                        <div>
+                          <label style={labelStyle()}>Data si ora avans</label>
+                          <input style={inputStyle()} type="datetime-local" value={selectedDeal.advanceDateTime} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: e.target.value })} />
+                        </div>
+
+                        <div>
+                          <label style={labelStyle()}>Avans (EUR)</label>
+                          <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.advanceAmount} onChange={(e) => updateDeal(selectedDeal.id, { advanceAmount: e.target.value })} placeholder="Suma avans in EUR" />
+                          {selectedDeal.advanceAmount ? <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{formatNumber(selectedDeal.advanceAmount)} EUR</div> : null}
+                        </div>
+
+                        <div>
+                          <label style={labelStyle()}>Moneda plata avans</label>
+                          <select style={inputStyle()} value={selectedDeal.advanceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { advanceCurrency: e.target.value })}>
+                            {CURRENCY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        </div>
+                      </>
                     )}
+
                     <div style={{ gridColumn: "1 / -1" }}>
                       <label style={labelStyle()}>Observatii generale tranzactie</label>
                       <textarea style={{ ...inputStyle(), minHeight: 90 }} value={selectedDeal.notes} onChange={(e) => updateDeal(selectedDeal.id, { notes: e.target.value })} />
