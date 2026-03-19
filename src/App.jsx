@@ -259,17 +259,18 @@ function formatMoney(value, currency) {
 
 function formatDateTime(value) {
   if (!value) return "-";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleString("ro-RO", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 function dealCompletion(deal) {
@@ -705,10 +706,35 @@ export default function App() {
                       </select>
                     </div>
 
-                    <div>
-                      <label style={labelStyle()}>Data si ora final</label>
-                      <input style={inputStyle()} type="datetime-local" value={selectedDeal.finalDateTime} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: e.target.value })} />
-                    </div>
+<div>
+  <label style={labelStyle()}>Data final</label>
+  <input
+    style={inputStyle()}
+    type="date"
+    value={selectedDeal.finalDateTime?.split("T")[0] || ""}
+    onChange={(e) => {
+      const time = selectedDeal.finalDateTime?.split("T")[1] || "00:00";
+      updateDeal(selectedDeal.id, {
+        finalDateTime: `${e.target.value}T${time}`,
+      });
+    }}
+  />
+</div>
+
+<div>
+  <label style={labelStyle()}>Ora final</label>
+  <input
+    style={inputStyle()}
+    type="time"
+    value={selectedDeal.finalDateTime?.split("T")[1] || ""}
+    onChange={(e) => {
+      const date = selectedDeal.finalDateTime?.split("T")[0] || "";
+      updateDeal(selectedDeal.id, {
+        finalDateTime: `${date}T${e.target.value}`,
+      });
+    }}
+  />
+</div>
 
                     {selectedDeal.type === "avans" && (
                       <>
