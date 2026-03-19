@@ -30,6 +30,11 @@ const STATUS_COLORS = {
   tranzactionat: { background: "#dcfce7", color: "#15803d", border: "1px solid #86efac" },
 };
 
+const TYPE_COLORS = {
+  avans: { background: "#dbeafe", color: "#1d4ed8", border: "1px solid #93c5fd" },
+  final: { background: "#dcfce7", color: "#15803d", border: "1px solid #86efac" },
+};
+
 const LAYOUT = {
   pageMaxWidth: 1680,
   leftCol: 430,
@@ -264,11 +269,6 @@ function getDealWarnings(deal) {
   }
 
   return warnings;
-}
-
-function formatNumber(value) {
-  if (value === null || value === undefined || value === "") return "";
-  return Number(value).toLocaleString("ro-RO");
 }
 
 function formatMoney(value, currency) {
@@ -648,16 +648,22 @@ export default function App() {
                   <div key={deal.id} onClick={() => setSelectedId(deal.id)} style={{ border: selectedId === deal.id ? "2px solid #111827" : "1px solid #d1d5db", borderRadius: 14, padding: 10, background: "white", cursor: "pointer" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "start" }}>
                       <div style={{ fontWeight: 700, flex: 1 }}>{deal.title || "Tranzactie fara nume"}</div>
-                      <span style={{ padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 700, ...STATUS_COLORS[deal.status] }}>{deal.status}</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                        <span style={{ padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 700, ...STATUS_COLORS[deal.status] }}>{deal.status}</span>
+                        <span style={{ padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 700, ...TYPE_COLORS[deal.type] }}>{deal.type}</span>
+                      </div>
                     </div>
                     <div style={{ marginTop: 6, fontSize: 12, color: "#4b5563", display: "grid", gap: 3, lineHeight: 1.3 }}>
                       <div><b>Agent:</b> {deal.agent || "-"}</div>
                       <div><b>Vanzatori:</b> {sellerNames || "-"}</div>
                       <div><b>Cumparatori:</b> {buyerNames || "-"}</div>
-                      <div><b>Pret:</b> {deal.price ? `${formatNumber(deal.price)} EUR` : "-"} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
+                      <div><b>Pret EUR:</b> {formatMoney(deal.price, "EUR")} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
                       <div><b>Com. V:</b> {formatMoney(sellerCommissionValue, "EUR")} · <b>Com. C:</b> {formatMoney(buyerCommissionValue, "EUR")}</div>
                       <div><b>Avans:</b> {formatDateTime(deal.advanceDateTime)}</div>
                       <div><b>Final:</b> {formatDateTime(deal.finalDateTime)}</div>
+                      {deal.type === "avans" && parseNumber(deal.advanceAmount) > 0 ? (
+                        <div><b>Avans:</b> {formatMoney(deal.advanceAmount, deal.advanceCurrency || "EUR")}</div>
+                      ) : null}
                     </div>
                     <div style={{ marginTop: 8, display: "grid", gap: 4, fontSize: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -716,13 +722,8 @@ export default function App() {
                       <input style={inputStyle()} type="datetime-local" value={selectedDeal.finalDateTime} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: e.target.value })} />
                     </div>
                     <div>
-                      <label style={labelStyle()}>Pret (EUR)</label>
-                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000" />
-                      {selectedDeal.price && (
-                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-                          {formatNumber(selectedDeal.price)} EUR
-                        </div>
-                      )}
+                      <label style={labelStyle()}>Pret</label>
+                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000 (EUR)" />
                     </div>
                     <div>
                       <label style={labelStyle()}>Moneda plata pret</label>
