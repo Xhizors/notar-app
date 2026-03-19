@@ -554,8 +554,8 @@ export default function App() {
       <div style={{ maxWidth: 1400, margin: "0 auto", display: "grid", gap: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 30, color: "#2f6de7" }}>Manager local programari notar</h1>
-            <p style={{ marginTop: 8, color: "#6b7280" }}>Imobiliare Jucu</p>
+            <h1 style={{ margin: 0, fontSize: 30 }}>Manager local programari notar</h1>
+            <p style={{ marginTop: 8, color: "#6b7280" }}>Varianta simpla, fara shadcn. Datele se salveaza in Supabase.</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button style={buttonStyle(false)} onClick={duplicateDeal}>Duplica tranzactie</button>
@@ -582,9 +582,9 @@ export default function App() {
               </select>
               <select style={inputStyle()} value={commissionFilter} onChange={(e) => setCommissionFilter(e.target.value)}>
                 <option value="toate">Toate comisioanele</option>
-                <option value="probleme comision">Comision neachitat + achitat partial</option>
-                <option value="neachitat">Comision neachitat</option>
-                <option value="achitat partial">Comision achitat partial</option>
+                <option value="probleme comision">Doar probleme comision</option>
+                <option value="neachitat">Doar neachitat</option>
+                <option value="achitat partial">Doar achitat partial</option>
               </select>
               <select style={inputStyle()} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
                 <option value="manual">Ordinea din lista</option>
