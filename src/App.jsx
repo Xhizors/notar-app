@@ -582,9 +582,9 @@ export default function App() {
               </select>
               <select style={inputStyle()} value={commissionFilter} onChange={(e) => setCommissionFilter(e.target.value)}>
                 <option value="toate">Toate comisioanele</option>
-                <option value="probleme comision">Doar probleme comision</option>
-                <option value="neachitat">Doar neachitat</option>
-                <option value="achitat partial">Doar achitat partial</option>
+                <option value="probleme comision">Comision neachitat + achitat partial</option>
+                <option value="neachitat">Comision neachitat</option>
+                <option value="achitat partial">Comision achitat partial</option>
               </select>
               <select style={inputStyle()} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
                 <option value="manual">Ordinea din lista</option>
