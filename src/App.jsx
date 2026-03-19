@@ -17,6 +17,7 @@ const DOC_OPTIONS = [
 
 const STATUS_OPTIONS = ["programat", "lipsa acte", "avans platit", "tranzactionat"];
 const TYPE_OPTIONS = ["avans", "final"];
+const AGENT_OPTIONS = ["Paul Pojar", "Alex Oltean", "Paul + Alex"];
 const CURRENCY_OPTIONS = ["EUR", "RON"];
 const COMMISSION_TYPE_OPTIONS = ["Procent", "Pret/mp", "Suma fixa"];
 const COMMISSION_PAYMENT_STATUS_OPTIONS = ["Achitat", "Achitat partial", "Neachitat"];
@@ -103,6 +104,7 @@ function emptyParty(name = "") {
 
 function emptyDeal() {
   return {
+    agent: "Paul Pojar",
     id: crypto.randomUUID(),
     title: "Tranzactie noua",
     status: "programat",
@@ -130,6 +132,7 @@ function emptyDeal() {
 
 function seedDeal() {
   return {
+    agent: "Paul + Alex",
     id: crypto.randomUUID(),
     title: "Jucu - teren 1500 mp",
     status: "lipsa acte",
@@ -323,6 +326,7 @@ async function loadTransactions() {
     buyerCommissionPaymentStatus: row.buyer_commission_payment_status || "Neachitat",
     buyerCommissionPaidAmount: row.buyer_commission_paid_amount ?? "",
     notes: row.notes || "",
+    agent: row.agent || "Paul Pojar",
   }));
 }
 
@@ -351,6 +355,7 @@ async function saveTransactions(tranzactii) {
     sellers: deal.sellers || [],
     buyers: deal.buyers || [],
     notes: deal.notes || "",
+    agent: deal.agent || "Paul Pojar",
   }));
 
   const { error } = await supabase.from("transactions").upsert(payload);
@@ -384,6 +389,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [savedAt, setSavedAt] = useState("");
   const [statusFilter, setStatusFilter] = useState("toate");
+  const [agentFilter, setAgentFilter] = useState("toate");
   const [commissionFilter, setCommissionFilter] = useState("toate");
   const [hidePaidCommissions, setHidePaidCommissions] = useState(false);
   const [sortOrder, setSortOrder] = useState("manual");
@@ -435,6 +441,7 @@ export default function App() {
     const filtered = tranzactii.filter((d) => {
       const matchesSearch = !q || [d.title, d.status, d.type, ...d.sellers.map((s) => s.name), ...d.buyers.map((b) => b.name), d.notes].join(" ").toLowerCase().includes(q);
       const matchesStatus = statusFilter === "toate" || d.status === statusFilter;
+      const matchesAgent = agentFilter === "toate" || d.agent === agentFilter;
 
       const hasUnpaid = d.sellerCommissionPaymentStatus === "Neachitat" || d.buyerCommissionPaymentStatus === "Neachitat";
       const hasPartial = d.sellerCommissionPaymentStatus === "Achitat partial" || d.buyerCommissionPaymentStatus === "Achitat partial";
@@ -450,7 +457,7 @@ export default function App() {
 
       if (hidePaidCommissions && fullyPaid) return false;
 
-      return matchesSearch && matchesStatus && matchesCommission;
+      return matchesSearch && matchesStatus && matchesAgent && matchesCommission;
     });
 
     const sorted = [...filtered];
@@ -486,7 +493,7 @@ export default function App() {
     }
 
     return sorted;
-  }, [tranzactii, search, statusFilter, commissionFilter, hidePaidCommissions, sortOrder]);
+  }, [tranzactii, search, statusFilter, agentFilter, commissionFilter, hidePaidCommissions, sortOrder]);
 
   function updateDeal(id, patch) {
     setTranzactii((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
@@ -601,6 +608,10 @@ export default function App() {
                 <option value="toate">Toate statusurile</option>
                 {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
+              <select style={inputStyle()} value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
+                <option value="toate">Toti agentii</option>
+                {AGENT_OPTIONS.map((agent) => <option key={agent} value={agent}>{agent}</option>)}
+              </select>
               <select style={inputStyle()} value={commissionFilter} onChange={(e) => setCommissionFilter(e.target.value)}>
                 <option value="toate">Toate comisioanele</option>
                 <option value="probleme comision">Comision neachitat + achitat partial</option>
@@ -635,6 +646,7 @@ export default function App() {
                       <span style={{ padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 700, ...STATUS_COLORS[deal.status] }}>{deal.status}</span>
                     </div>
                     <div style={{ marginTop: 6, fontSize: 12, color: "#4b5563", display: "grid", gap: 3, lineHeight: 1.3 }}>
+                      <div><b>Agent:</b> {deal.agent || "-"}</div>
                       <div><b>Vanzatori:</b> {sellerNames || "-"}</div>
                       <div><b>Cumparatori:</b> {buyerNames || "-"}</div>
                       <div><b>Pret EUR:</b> {formatMoney(deal.price, "EUR")} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
@@ -672,6 +684,12 @@ export default function App() {
                       <label style={labelStyle()}>Status</label>
                       <select style={inputStyle()} value={selectedDeal.status} onChange={(e) => updateDeal(selectedDeal.id, { status: e.target.value })}>
                         {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={labelStyle()}>Agent</label>
+                      <select style={inputStyle()} value={selectedDeal.agent || "Paul Pojar"} onChange={(e) => updateDeal(selectedDeal.id, { agent: e.target.value })}>
+                        {AGENT_OPTIONS.map((agent) => <option key={agent} value={agent}>{agent}</option>)}
                       </select>
                     </div>
                     <div>
