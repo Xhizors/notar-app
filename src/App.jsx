@@ -20,6 +20,7 @@ const TYPE_OPTIONS = ["avans", "final"];
 const CURRENCY_OPTIONS = ["EUR", "RON"];
 const COMMISSION_TYPE_OPTIONS = ["Procent", "Pret/mp", "Suma fixa"];
 const COMMISSION_PAYMENT_STATUS_OPTIONS = ["Achitat", "Achitat partial", "Neachitat"];
+const COMMISSION_FILTER_OPTIONS = ["toate", "probleme comision", "neachitat", "achitat partial"];
 
 const STATUS_COLORS = {
   programat: { background: "#dbeafe", color: "#1d4ed8", border: "1px solid #93c5fd" },
@@ -186,6 +187,25 @@ function completionStats(parties) {
   return { checked, total, pct: total ? Math.round((checked / total) * 100) : 0 };
 }
 
+function getCommissionWarnings(deal) {
+  const warnings = [];
+
+  if (deal.sellerCommissionPaymentStatus === "Neachitat") {
+    warnings.push("Vanzator - COMISION NEACHITAT");
+  }
+  if (deal.sellerCommissionPaymentStatus === "Achitat partial") {
+    warnings.push("Vanzator - COMISION ACHITAT PARTIAL");
+  }
+  if (deal.buyerCommissionPaymentStatus === "Neachitat") {
+    warnings.push("Cumparator - COMISION NEACHITAT");
+  }
+  if (deal.buyerCommissionPaymentStatus === "Achitat partial") {
+    warnings.push("Cumparator - COMISION ACHITAT PARTIAL");
+  }
+
+  return warnings;
+}
+
 function getDealWarnings(deal) {
   const warnings = [];
 
@@ -349,6 +369,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [savedAt, setSavedAt] = useState("");
   const [statusFilter, setStatusFilter] = useState("toate");
+  const [commissionFilter, setCommissionFilter] = useState("toate");
   const [sortOrder, setSortOrder] = useState("manual");
   const [sectionsOpen, setSectionsOpen] = useState({
     detalii: true,
@@ -398,7 +419,17 @@ export default function App() {
     const filtered = tranzactii.filter((d) => {
       const matchesSearch = !q || [d.title, d.status, d.type, ...d.sellers.map((s) => s.name), ...d.buyers.map((b) => b.name), d.notes].join(" ").toLowerCase().includes(q);
       const matchesStatus = statusFilter === "toate" || d.status === statusFilter;
-      return matchesSearch && matchesStatus;
+
+      const hasUnpaid = d.sellerCommissionPaymentStatus === "Neachitat" || d.buyerCommissionPaymentStatus === "Neachitat";
+      const hasPartial = d.sellerCommissionPaymentStatus === "Achitat partial" || d.buyerCommissionPaymentStatus === "Achitat partial";
+      const hasCommissionIssues = hasUnpaid || hasPartial;
+
+      let matchesCommission = true;
+      if (commissionFilter === "probleme comision") matchesCommission = hasCommissionIssues;
+      if (commissionFilter === "neachitat") matchesCommission = hasUnpaid;
+      if (commissionFilter === "achitat partial") matchesCommission = hasPartial;
+
+      return matchesSearch && matchesStatus && matchesCommission;
     });
 
     const sorted = [...filtered];
@@ -434,7 +465,7 @@ export default function App() {
     }
 
     return sorted;
-  }, [tranzactii, search, statusFilter, sortOrder]);
+  }, [tranzactii, search, statusFilter, commissionFilter, sortOrder]);
 
   function updateDeal(id, patch) {
     setTranzactii((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
@@ -523,7 +554,7 @@ export default function App() {
       <div style={{ maxWidth: 1400, margin: "0 auto", display: "grid", gap: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 30 }}>Manager local programari notar</h1>
+            <h1 style={{ margin: 0, fontSize: 30, color: "black" }}>Manager local programari notar</h1>
             <p style={{ marginTop: 8, color: "#6b7280" }}>Varianta simpla, fara shadcn. Datele se salveaza in Supabase.</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -549,6 +580,12 @@ export default function App() {
                 <option value="toate">Toate statusurile</option>
                 {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
+              <select style={inputStyle()} value={commissionFilter} onChange={(e) => setCommissionFilter(e.target.value)}>
+                <option value="toate">Toate comisioanele</option>
+                <option value="probleme comision">Doar probleme comision</option>
+                <option value="neachitat">Doar neachitat</option>
+                <option value="achitat partial">Doar achitat partial</option>
+              </select>
               <select style={inputStyle()} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
                 <option value="manual">Ordinea din lista</option>
                 <option value="cronologic_asc">Cronologic - cel mai apropiat</option>
@@ -560,6 +597,7 @@ export default function App() {
             <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
               {filteredDeals.map((deal) => {
                 const dealWarnings = getDealWarnings(deal);
+                const commissionWarnings = getCommissionWarnings(deal);
                 const sellerCommissionValue = calculateCommission(deal.price, deal.area, deal.sellerCommissionType, deal.sellerCommissionValue);
                 const buyerCommissionValue = calculateCommission(deal.price, deal.area, deal.buyerCommissionType, deal.buyerCommissionValue);
                 const sellerNames = deal.sellers.map((s) => s.name || "Fara nume").join(", ");
@@ -578,9 +616,16 @@ export default function App() {
                       <div><b>Avans:</b> {formatDateTime(deal.advanceDateTime)}</div>
                       <div><b>Final:</b> {formatDateTime(deal.finalDateTime)}</div>
                     </div>
-                    <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                      <span>Completare acte: {dealCompletion(deal)}%</span>
-                      <span>{dealWarnings.length ? `${dealWarnings.length} warning` : "OK"}</span>
+                    <div style={{ marginTop: 10, display: "grid", gap: 6, fontSize: 13 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>Completare acte: {dealCompletion(deal)}%</span>
+                        <span>{dealWarnings.length ? `${dealWarnings.length} warning` : "OK"}</span>
+                      </div>
+                      {commissionWarnings.map((warning, idx) => (
+                        <div key={idx} style={{ color: "#b91c1c", fontWeight: 800, fontSize: 12 }}>
+                          {warning}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
