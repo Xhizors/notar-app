@@ -273,6 +273,37 @@ function formatDateTime(value) {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+function toDisplayDate(value) {
+  if (!value) return "";
+  const [datePart] = String(value).split("T");
+  if (!datePart) return "";
+  const [year, month, day] = datePart.split("-");
+  if (!year || !month || !day) return "";
+  return `${day}/${month}/${year}`;
+}
+
+function toDisplayTime(value) {
+  if (!value) return "";
+  const [, timePart] = String(value).split("T");
+  if (!timePart) return "";
+  return timePart.slice(0, 5);
+}
+
+function fromDisplayDateTime(dateStr, timeStr) {
+  const cleanDate = String(dateStr || "").trim();
+  const cleanTime = String(timeStr || "").trim();
+
+  const dateMatch = cleanDate.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const timeMatch = cleanTime.match(/^(\d{2}):(\d{2})$/);
+
+  if (!dateMatch || !timeMatch) return "";
+
+  const [, day, month, year] = dateMatch;
+  const [, hour, minute] = timeMatch;
+
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
 function dealCompletion(deal) {
   const seller = completionStats(deal.sellers);
   const buyer = completionStats(deal.buyers);
@@ -707,41 +738,66 @@ export default function App() {
                     </div>
 
 <div>
-  <label style={labelStyle()}>Data final</label>
+  <label style={labelStyle()}>Data final (dd/mm/yyyy)</label>
   <input
     style={inputStyle()}
-    type="date"
-    value={selectedDeal.finalDateTime?.split("T")[0] || ""}
+    type="text"
+    placeholder="ex: 21/03/2026"
+    value={toDisplayDate(selectedDeal.finalDateTime)}
     onChange={(e) => {
-      const time = selectedDeal.finalDateTime?.split("T")[1] || "00:00";
-      updateDeal(selectedDeal.id, {
-        finalDateTime: `${e.target.value}T${time}`,
-      });
+      const currentTime = toDisplayTime(selectedDeal.finalDateTime) || "00:00";
+      const iso = fromDisplayDateTime(e.target.value, currentTime);
+      updateDeal(selectedDeal.id, { finalDateTime: iso });
     }}
   />
 </div>
 
 <div>
-  <label style={labelStyle()}>Ora final</label>
+  <label style={labelStyle()}>Ora final (HH:mm)</label>
   <input
     style={inputStyle()}
-    type="time"
-    value={selectedDeal.finalDateTime?.split("T")[1] || ""}
+    type="text"
+    placeholder="ex: 15:30"
+    value={toDisplayTime(selectedDeal.finalDateTime)}
     onChange={(e) => {
-      const date = selectedDeal.finalDateTime?.split("T")[0] || "";
-      updateDeal(selectedDeal.id, {
-        finalDateTime: `${date}T${e.target.value}`,
-      });
+      const currentDate = toDisplayDate(selectedDeal.finalDateTime) || "";
+      const iso = fromDisplayDateTime(currentDate, e.target.value);
+      updateDeal(selectedDeal.id, { finalDateTime: iso });
     }}
   />
 </div>
 
                     {selectedDeal.type === "avans" && (
                       <>
-                        <div>
-                          <label style={labelStyle()}>Data si ora avans</label>
-                          <input style={inputStyle()} type="datetime-local" value={selectedDeal.advanceDateTime} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: e.target.value })} />
-                        </div>
+<div>
+  <label style={labelStyle()}>Data avans (dd/mm/yyyy)</label>
+  <input
+    style={inputStyle()}
+    type="text"
+    placeholder="ex: 21/03/2026"
+    value={toDisplayDate(selectedDeal.advanceDateTime)}
+    onChange={(e) => {
+      const currentTime = toDisplayTime(selectedDeal.advanceDateTime) || "00:00";
+      const iso = fromDisplayDateTime(e.target.value, currentTime);
+      updateDeal(selectedDeal.id, { advanceDateTime: iso });
+    }}
+  />
+</div>
+
+<div>
+  <label style={labelStyle()}>Ora avans (HH:mm)</label>
+  <input
+    style={inputStyle()}
+    type="text"
+    placeholder="ex: 15:30"
+    value={toDisplayTime(selectedDeal.advanceDateTime)}
+    onChange={(e) => {
+      const currentDate = toDisplayDate(selectedDeal.advanceDateTime) || "";
+      const iso = fromDisplayDateTime(currentDate, e.target.value);
+      updateDeal(selectedDeal.id, { advanceDateTime: iso });
+    }}
+  />
+</div>
 
                         <div>
                           <label style={labelStyle()}>Avans (EUR)</label>
