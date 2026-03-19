@@ -569,8 +569,8 @@ export default function App() {
       <div style={{ maxWidth: LAYOUT.pageMaxWidth, margin: "0 auto", display: "grid", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 30 }}>Manager local programari notar</h1>
-            <p style={{ marginTop: 8, color: "#6b7280" }}>Varianta simpla, fara shadcn. Datele se salveaza in Supabase.</p>
+            <h1 style={{ margin: 0, fontSize: 30, color:"#0075fc" }}>Manager local programari notar</h1>
+            <p style={{ marginTop: 8, color: "#6b7280" }}>Imobiliare Jucu</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button style={buttonStyle(false)} onClick={duplicateDeal}>Duplica tranzactie</button>
