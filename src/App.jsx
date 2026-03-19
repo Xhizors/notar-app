@@ -29,6 +29,11 @@ const STATUS_COLORS = {
   tranzactionat: { background: "#dcfce7", color: "#15803d", border: "1px solid #86efac" },
 };
 
+const LAYOUT = {
+  pageMaxWidth: 1680,
+  leftCol: 430,
+};
+
 function sectionStyle() {
   return {
     background: "white",
@@ -36,6 +41,16 @@ function sectionStyle() {
     borderRadius: 16,
     padding: 16,
     boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+  };
+}
+
+function compactSectionStyle() {
+  return {
+    background: "white",
+    border: "1px solid #e5e7eb",
+    borderRadius: 14,
+    padding: 12,
+    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
   };
 }
 
@@ -354,9 +369,9 @@ async function deleteTransactionFromDb(id) {
 function Section({ title, isOpen, onToggle, children, bg }) {
   return (
     <div style={{ ...sectionStyle(), background: bg || "white", flexShrink: 0 }}>
-      <div onClick={onToggle} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", marginBottom: isOpen ? 16 : 0 }}>
-        <h3 style={{ margin: 0, fontSize: 18 }}>{title}</h3>
-        <button style={buttonStyle(false)}>{isOpen ? "Inchide" : "Deschide"}</button>
+      <div onClick={onToggle} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", marginBottom: isOpen ? 12 : 0 }}>
+        <h3 style={{ margin: 0, fontSize: 17 }}>{title}</h3>
+        <button style={{ ...buttonStyle(false), padding: "6px 10px", fontSize: 12 }}>{isOpen ? "Inchide" : "Deschide"}</button>
       </div>
       {isOpen ? children : null}
     </div>
@@ -550,8 +565,8 @@ export default function App() {
   const warnings = selectedDeal ? getDealWarnings(selectedDeal) : [];
 
   return (
-    <div style={{ minHeight: "100vh", height: "100vh", background: "#f8fafc", padding: 16, fontFamily: "Arial, sans-serif", color: "#111827", overflow: "hidden", boxSizing: "border-box" }}>
-      <div style={{ maxWidth: 1400, height: "100%", margin: "0 auto", display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr)", gap: 16, minHeight: 0 }}>
+    <div style={{ minHeight: "100vh", background: "#f8fafc", padding: 14, fontFamily: "Arial, sans-serif", color: "#111827", boxSizing: "border-box" }}>
+      <div style={{ maxWidth: LAYOUT.pageMaxWidth, margin: "0 auto", display: "grid", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 30 }}>Manager local programari notar</h1>
@@ -564,15 +579,15 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10 }}>
           <div style={sectionStyle()}><div style={{ color: "#6b7280", fontSize: 13 }}>Total tranzactii</div><div style={{ fontSize: 28, fontWeight: 700 }}>{globalStats.totalDeals}</div></div>
           <div style={sectionStyle()}><div style={{ color: "#6b7280", fontSize: 13 }}>Programate</div><div style={{ fontSize: 28, fontWeight: 700 }}>{globalStats.programmed}</div></div>
           <div style={sectionStyle()}><div style={{ color: "#6b7280", fontSize: 13 }}>Cu warning-uri</div><div style={{ fontSize: 28, fontWeight: 700 }}>{globalStats.missingDocsCount}</div></div>
           <div style={sectionStyle()}><div style={{ color: "#6b7280", fontSize: 13 }}>Ultima salvare</div><div style={{ fontSize: 16, fontWeight: 700 }}>{savedAt || "-"}</div></div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "380px minmax(0, 1fr)", gap: 16, alignItems: "stretch", minHeight: 0, overflow: "hidden" }}>
-          <div style={{ ...sectionStyle(), display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `${LAYOUT.leftCol}px minmax(0, 1fr)`, gap: 14, alignItems: "start" }}>
+          <div style={{ ...sectionStyle(), display: "flex", flexDirection: "column" }}>
             <h3 style={{ marginTop: 0 }}>Tranzactii</h3>
             <div style={{ display: "grid", gap: 10 }}>
               <input style={inputStyle()} placeholder="Cauta..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -594,7 +609,7 @@ export default function App() {
               </select>
             </div>
 
-            <div style={{ display: "grid", gap: 10, marginTop: 14, flex: 1, minHeight: 0, overflowY: "auto", paddingRight: 4 }}>
+            <div style={{ display: "grid", gap: 8, marginTop: 12, maxHeight: "62vh", overflowY: "auto", paddingRight: 4 }}>
               {filteredDeals.map((deal) => {
                 const dealWarnings = getDealWarnings(deal);
                 const commissionWarnings = getCommissionWarnings(deal);
@@ -603,12 +618,12 @@ export default function App() {
                 const sellerNames = deal.sellers.map((s) => s.name || "Fara nume").join(", ");
                 const buyerNames = deal.buyers.map((b) => b.name || "Fara nume").join(", ");
                 return (
-                  <div key={deal.id} onClick={() => setSelectedId(deal.id)} style={{ border: selectedId === deal.id ? "2px solid #111827" : "1px solid #d1d5db", borderRadius: 16, padding: 12, background: "white", cursor: "pointer" }}>
+                  <div key={deal.id} onClick={() => setSelectedId(deal.id)} style={{ border: selectedId === deal.id ? "2px solid #111827" : "1px solid #d1d5db", borderRadius: 14, padding: 10, background: "white", cursor: "pointer" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "start" }}>
                       <div style={{ fontWeight: 700, flex: 1 }}>{deal.title || "Tranzactie fara nume"}</div>
                       <span style={{ padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 700, ...STATUS_COLORS[deal.status] }}>{deal.status}</span>
                     </div>
-                    <div style={{ marginTop: 8, fontSize: 13, color: "#4b5563", display: "grid", gap: 4 }}>
+                    <div style={{ marginTop: 6, fontSize: 12, color: "#4b5563", display: "grid", gap: 3, lineHeight: 1.3 }}>
                       <div><b>Vanzatori:</b> {sellerNames || "-"}</div>
                       <div><b>Cumparatori:</b> {buyerNames || "-"}</div>
                       <div><b>Pret EUR:</b> {formatMoney(deal.price, "EUR")} · <b>Moneda plata:</b> {deal.priceCurrency}</div>
@@ -616,13 +631,13 @@ export default function App() {
                       <div><b>Avans:</b> {formatDateTime(deal.advanceDateTime)}</div>
                       <div><b>Final:</b> {formatDateTime(deal.finalDateTime)}</div>
                     </div>
-                    <div style={{ marginTop: 10, display: "grid", gap: 6, fontSize: 13 }}>
+                    <div style={{ marginTop: 8, display: "grid", gap: 4, fontSize: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
                         <span>Completare acte: {dealCompletion(deal)}%</span>
                         <span>{dealWarnings.length ? `${dealWarnings.length} warning` : "OK"}</span>
                       </div>
                       {commissionWarnings.map((warning, idx) => (
-                        <div key={idx} style={{ color: "#b91c1c", fontWeight: 800, fontSize: 12 }}>
+                        <div key={idx} style={{ color: "#b91c1c", fontWeight: 800, fontSize: 11, lineHeight: 1.2 }}>
                           {warning}
                         </div>
                       ))}
@@ -633,7 +648,7 @@ export default function App() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gap: 16, minHeight: 0, overflowY: "auto", paddingRight: 6, alignContent: "start" }}>
+          <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
             {selectedDeal ? (
               <>
                 <Section title="Detalii tranzactie" isOpen={sectionsOpen.detalii} onToggle={() => toggleSection("detalii")}>
@@ -752,11 +767,11 @@ export default function App() {
 
                 <Section title="Warning-uri tranzactie" isOpen={sectionsOpen.warninguri} onToggle={() => toggleSection("warninguri")} bg="#fefce8">
                   {warnings.length ? (
-                    <div style={{ display: "grid", gap: 8 }}>
-                      {warnings.map((warning, idx) => <div key={idx} style={{ border: "1px solid #fde68a", background: "white", borderRadius: 12, padding: 12 }}>{warning}</div>)}
+                    <div style={{ display: "grid", gap: 6 }}>
+                      {warnings.map((warning, idx) => <div key={idx} style={{ border: "1px solid #fde68a", background: "white", borderRadius: 10, padding: "8px 10px", fontSize: 12, lineHeight: 1.25 }}>{warning}</div>)}
                     </div>
                   ) : (
-                    <div style={{ border: "1px solid #86efac", background: "white", borderRadius: 12, padding: 12, color: "#15803d" }}>Tranzactia arata bine. Nu exista warning-uri active.</div>
+                    <div style={{ border: "1px solid #86efac", background: "white", borderRadius: 10, padding: "8px 10px", color: "#15803d", fontSize: 12 }}>Tranzactia arata bine. Nu exista warning-uri active.</div>
                   )}
                 </Section>
 
@@ -774,7 +789,7 @@ export default function App() {
                           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "start" }}>
                             <div style={{ display: "grid", gap: 10 }}>
                               <div>
-                                <label style={labelStyle()}>Nume</label>
+                                <label style={labelStyle()}>{party.name?.trim() || `Vanzator ${idx + 1}`}</label>
                                 <input style={inputStyle()} value={party.name} onChange={(e) => updateParty("sellers", party.id, { name: e.target.value })} placeholder={`Vanzator ${idx + 1}`} />
                               </div>
                               <div>
@@ -816,7 +831,7 @@ export default function App() {
                           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "start" }}>
                             <div style={{ display: "grid", gap: 10 }}>
                               <div>
-                                <label style={labelStyle()}>Nume</label>
+                                <label style={labelStyle()}>{party.name?.trim() || `Cumparator ${idx + 1}`}</label>
                                 <input style={inputStyle()} value={party.name} onChange={(e) => updateParty("buyers", party.id, { name: e.target.value })} placeholder={`Cumparator ${idx + 1}`} />
                               </div>
                               <div>
