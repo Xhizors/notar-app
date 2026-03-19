@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "./lib/supabase";
 
-const STORAGE_KEY = "notary-manager-local-v3";
-
 const DOC_OPTIONS = [
   "Buletin",
   "Fiscal",
@@ -21,7 +19,6 @@ const AGENT_OPTIONS = ["Paul Pojar", "Alex Oltean", "Paul + Alex"];
 const CURRENCY_OPTIONS = ["EUR", "RON"];
 const COMMISSION_TYPE_OPTIONS = ["Procent", "Pret/mp", "Suma fixa"];
 const COMMISSION_PAYMENT_STATUS_OPTIONS = ["Achitat", "Achitat partial", "Neachitat"];
-const COMMISSION_FILTER_OPTIONS = ["toate", "probleme comision", "neachitat", "achitat partial", "achitat"];
 
 const STATUS_COLORS = {
   programat: { background: "#dbeafe", color: "#1d4ed8", border: "1px solid #93c5fd" },
@@ -47,16 +44,6 @@ function sectionStyle() {
     borderRadius: 16,
     padding: 16,
     boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-  };
-}
-
-function compactSectionStyle() {
-  return {
-    background: "white",
-    border: "1px solid #e5e7eb",
-    borderRadius: 14,
-    padding: 12,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
   };
 }
 
@@ -190,6 +177,11 @@ function parseNumber(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "";
+  return Number(value).toLocaleString("ro-RO");
+}
+
 function calculateCommission(price, area, type, value) {
   const p = parseNumber(price);
   const a = parseNumber(area);
@@ -212,26 +204,15 @@ function completionStats(parties) {
 
 function getCommissionWarnings(deal) {
   const warnings = [];
-
-  if (deal.sellerCommissionPaymentStatus === "Neachitat") {
-    warnings.push("Vanzator - COMISION NEACHITAT");
-  }
-  if (deal.sellerCommissionPaymentStatus === "Achitat partial") {
-    warnings.push("Vanzator - COMISION ACHITAT PARTIAL");
-  }
-  if (deal.buyerCommissionPaymentStatus === "Neachitat") {
-    warnings.push("Cumparator - COMISION NEACHITAT");
-  }
-  if (deal.buyerCommissionPaymentStatus === "Achitat partial") {
-    warnings.push("Cumparator - COMISION ACHITAT PARTIAL");
-  }
-
+  if (deal.sellerCommissionPaymentStatus === "Neachitat") warnings.push("Vanzator - COMISION NEACHITAT");
+  if (deal.sellerCommissionPaymentStatus === "Achitat partial") warnings.push("Vanzator - COMISION ACHITAT PARTIAL");
+  if (deal.buyerCommissionPaymentStatus === "Neachitat") warnings.push("Cumparator - COMISION NEACHITAT");
+  if (deal.buyerCommissionPaymentStatus === "Achitat partial") warnings.push("Cumparator - COMISION ACHITAT PARTIAL");
   return warnings;
 }
 
 function getDealWarnings(deal) {
   const warnings = [];
-
   if (!deal.advanceDateTime && deal.type === "avans") warnings.push("Nu este setata data si ora pentru avans.");
   if (!deal.finalDateTime && deal.type === "final") warnings.push("Nu este setata data si ora pentru contractul final.");
   if (!deal.price) warnings.push("Lipseste pretul tranzactiei.");
@@ -271,11 +252,6 @@ function getDealWarnings(deal) {
   return warnings;
 }
 
-function formatNumber(value) {
-  if (value === null || value === undefined || value === "") return "";
-  return Number(value).toLocaleString("ro-RO");
-}
-
 function formatMoney(value, currency) {
   const number = parseNumber(value);
   return `${number.toLocaleString("ro-RO", { maximumFractionDigits: 2 })} ${currency}`.trim();
@@ -303,11 +279,7 @@ function dealCompletion(deal) {
 }
 
 async function loadTransactions() {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .order("position", { ascending: true });
-
+  const { data, error } = await supabase.from("transactions").select("*").order("position", { ascending: true });
   if (error) {
     console.error("Eroare la incarcare:", error);
     return [];
@@ -369,16 +341,12 @@ async function saveTransactions(tranzactii) {
   }));
 
   const { error } = await supabase.from("transactions").upsert(payload);
-  if (error) {
-    console.error("Eroare la salvare:", error);
-  }
+  if (error) console.error("Eroare la salvare:", error);
 }
 
 async function deleteTransactionFromDb(id) {
   const { error } = await supabase.from("transactions").delete().eq("id", id);
-  if (error) {
-    console.error("Eroare la stergere:", error);
-  }
+  if (error) console.error("Eroare la stergere:", error);
 }
 
 function Section({ title, isOpen, onToggle, children, bg }) {
@@ -456,7 +424,6 @@ export default function App() {
       const hasUnpaid = d.sellerCommissionPaymentStatus === "Neachitat" || d.buyerCommissionPaymentStatus === "Neachitat";
       const hasPartial = d.sellerCommissionPaymentStatus === "Achitat partial" || d.buyerCommissionPaymentStatus === "Achitat partial";
       const hasCommissionIssues = hasUnpaid || hasPartial;
-
       const fullyPaid = d.sellerCommissionPaymentStatus === "Achitat" && d.buyerCommissionPaymentStatus === "Achitat";
 
       let matchesCommission = true;
@@ -464,7 +431,6 @@ export default function App() {
       if (commissionFilter === "neachitat") matchesCommission = hasUnpaid;
       if (commissionFilter === "achitat partial") matchesCommission = hasPartial;
       if (commissionFilter === "achitat") matchesCommission = fullyPaid;
-
       if (hidePaidCommissions && fullyPaid) return false;
 
       return matchesSearch && matchesStatus && matchesAgent && matchesCommission;
@@ -592,7 +558,7 @@ export default function App() {
       <div style={{ maxWidth: LAYOUT.pageMaxWidth, margin: "0 auto", display: "grid", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 30, color:"#0075fc" }}>Manager local programari notar</h1>
+            <h1 style={{ margin: 0, fontSize: 30, color: "#0075fc" }}>Manager local programari notar</h1>
             <p style={{ marginTop: 8, color: "#6b7280" }}>Imobiliare Jucu</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -668,7 +634,7 @@ export default function App() {
                       <div><b>Final:</b> {formatDateTime(deal.finalDateTime)}</div>
                       {deal.type === "avans" && parseNumber(deal.advanceAmount) > 0 ? (
                         <div>
-                          <b>Avans:</b> {formatMoney(deal.advanceAmount, "EUR")}
+                          <b>Suma avans:</b> {formatMoney(deal.advanceAmount, "EUR")}
                           {deal.advanceCurrency && deal.advanceCurrency !== "EUR" ? ` (${deal.advanceCurrency})` : ""}
                         </div>
                       ) : null}
@@ -679,9 +645,7 @@ export default function App() {
                         <span>{dealWarnings.length ? `${dealWarnings.length} warning` : "OK"}</span>
                       </div>
                       {commissionWarnings.map((warning, idx) => (
-                        <div key={idx} style={{ color: "#b91c1c", fontWeight: 800, fontSize: 11, lineHeight: 1.2 }}>
-                          {warning}
-                        </div>
+                        <div key={idx} style={{ color: "#b91c1c", fontWeight: 800, fontSize: 11, lineHeight: 1.2 }}>{warning}</div>
                       ))}
                     </div>
                   </div>
@@ -721,32 +685,16 @@ export default function App() {
                       <label style={labelStyle()}>Suprafata</label>
                       <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.area} onChange={(e) => updateDeal(selectedDeal.id, { area: e.target.value })} placeholder="mp" />
                     </div>
+                    {selectedDeal.type === "avans" && (
+                    <>
                     <div>
                       <label style={labelStyle()}>Data si ora avans</label>
                       <input style={inputStyle()} type="datetime-local" value={selectedDeal.advanceDateTime} onChange={(e) => updateDeal(selectedDeal.id, { advanceDateTime: e.target.value })} />
                     </div>
                     <div>
-                      <label style={labelStyle()}>Data si ora final</label>
-                      <input style={inputStyle()} type="datetime-local" value={selectedDeal.finalDateTime} onChange={(e) => updateDeal(selectedDeal.id, { finalDateTime: e.target.value })} />
-                    </div>
-                    <div>
-                      <label style={labelStyle()}>Pret (EUR)</label>
-                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.price} onChange={(e) => updateDeal(selectedDeal.id, { price: e.target.value })} placeholder="Ex: 120000" />
-                      {selectedDeal.price && (
-                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-                          {formatNumber(selectedDeal.price)} EUR
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label style={labelStyle()}>Moneda plata pret</label>
-                      <select style={inputStyle()} value={selectedDeal.priceCurrency} onChange={(e) => updateDeal(selectedDeal.id, { priceCurrency: e.target.value })}>
-                        {CURRENCY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={labelStyle()}>Avans</label>
-                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.advanceAmount} onChange={(e) => updateDeal(selectedDeal.id, { advanceAmount: e.target.value })} placeholder="Suma avans" />
+                      <label style={labelStyle()}>Avans (EUR)</label>
+                      <input style={inputStyle()} type="number" step="0.01" value={selectedDeal.advanceAmount} onChange={(e) => updateDeal(selectedDeal.id, { advanceAmount: e.target.value })} placeholder="Suma avans in EUR" />
+                      {selectedDeal.advanceAmount ? <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{formatNumber(selectedDeal.advanceAmount)} EUR</div> : null}
                     </div>
                     <div>
                       <label style={labelStyle()}>Moneda plata avans</label>
@@ -754,6 +702,8 @@ export default function App() {
                         {CURRENCY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
+                    </>
+                    )}
                     <div style={{ gridColumn: "1 / -1" }}>
                       <label style={labelStyle()}>Observatii generale tranzactie</label>
                       <textarea style={{ ...inputStyle(), minHeight: 90 }} value={selectedDeal.notes} onChange={(e) => updateDeal(selectedDeal.id, { notes: e.target.value })} />
